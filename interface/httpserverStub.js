@@ -2,7 +2,7 @@
 // Please make sure that you have checked all TODOs in this file.
 // TODO: please replace types with peramters' name you wanted of any functions
 // TODO: please replace $ipcType with one of dbus, binder, websocket and socket
-var flowctl = require('../../../sdk/utils/flowctl');
+var flowctl = require('utils').Flowctl;
 
 var initObj = {
   "address": "nodejs.webde.httpserver",
