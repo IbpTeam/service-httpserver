@@ -6,8 +6,8 @@ var http = require("http"),
     config = require('systemconfig'),
     requireProxy = require('../../../app/demo-rio/sdk/lib/requireProxy').requireProxySync,
     utils = require('utils'),
-    Cache = utils.Cache,
-    flowctl = utils.Flowctl,
+    Cache = utils.Cache(),
+    flowctl = utils.Flowctl(),
     appManager = requireProxy('appmgr');
 
 var appInfoCache = new Cache(20, {

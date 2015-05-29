@@ -10,6 +10,12 @@
     "http",
     "server"
   ],
+  "dependencies": {
+    "ws" : "~0.4.32",
+    "systemconfig": "~0.1.0",
+    "webde-rpc": "~0.1.0",
+    "utils": "~0.1.0"
+  },
   "author": "CannedFish",
   "license": "BSD-2-Clause"
 }
