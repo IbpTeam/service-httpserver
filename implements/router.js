@@ -8,7 +8,8 @@ var http = require("http"),
     utils = require('utils'),
     Cache = utils.Cache(),
     flowctl = utils.Flowctl(),
-    appManager = requireProxy('appmgr');
+    appManager = requireProxy('appmgr'),
+    api = require('api');
 
 var appInfoCache = new Cache(20, {
   init: function(key, list) {
@@ -48,72 +49,72 @@ function errorHandler(errorNum, response, msg) {
 }
 
 function getRemoteAPIFile(handle, modulename, response) {
-  var realPath = path.resolve("../../APIs", modulename + "_remote.js"),
-      modulePath = path.resolve("../../APIs", modulename + ".js"),
-      onehandle = require(modulePath);
+  var /* realPath = path.resolve("../../APIs", modulename + "_remote.js"), */
+      /* modulePath = path.resolve("../../APIs", modulename + ".js"), */
+      remote = modulename + "_remote",
+      onehandle = api[modulename]();
+
   handle[modulename] = onehandle;
-  path.exists(realPath, function(exists) {
-    var handle_remote = [];
-    if(exists) {
-      handle_remote = require(realPath);
-    }
-    //The follow content is template for write code.
-    //The mix_remote.js file is example of replacing remote function.
-    /**
-      * define(function(){
-      *   var o={};
-      *   function sendrequest(a, ar){
-      *     var sd = {};
-      *     var cb=ar.shift();
-      *     sd.api = a;sd.args = ar;
-      *     $.ajax({
-      *       url: "/callapi", type: "post", contentType: "application/json;charset=utf-8", dataType: "json",
-      *       data: JSON.stringify(sd),
-      *       success: function(r) {setTimeout(cb.apply(null,r), 0);},
-      *       error: function(e) {throw e;}
-      *     });
-      *   }
-      *   o.getHello = function(){
-      *     sendrequest("mix.getHello", Array.prototype.slice.call(arguments));
-      *   }
-      *   o.getHello2 = function(){
-      *     sendrequest("mix.getHello2", Array.prototype.slice.call(arguments));
-      *   }
-      *   o.getHello3 = function(){
-      *     sendrequest("mix.getHello3", Array.prototype.slice.call(arguments));
-      *   }
-      *   o.openDev = function(callback){
-      *     console.log("openDev is not supported now.");
-      *     setTimeout(callback(false), 0);
-      *   }
-      *   o.isLocal = function(callback){
-      *     setTimeout(callback(false), 0);
-      *   }
-      *   return o;
-      * })
-      */
-    response.writeHead(200, {'Content-Type': content_type = 'application/javascript'});
-    var remotejs='define(function(){var o={};function sendrequest(a, ar){var sd = {};var cb=ar.shift();sd.api = a;sd.args = ar;$.ajax({      url: "/callapi", type: "post", contentType: "application/json;charset=utf-8", dataType: "json", data: JSON.stringify(sd), success: function(r) {setTimeout(cb.apply(null,r), 0);}, error: function(e) {throw e;} });};';
-    response.write(remotejs, "binary");
-    var func;
-    for(func in onehandle) {
-      response.write("o.");
+  var handle_remote = [];
+  if(typeof api[remote] != "undefined") {
+    handle_remote = api[remote]();
+  }
+
+  //The follow content is template for write code.
+  //The mix_remote.js file is example of replacing remote function.
+  /**
+    * define(function(){
+    *   var o={};
+    *   function sendrequest(a, ar){
+    *     var sd = {};
+    *     var cb=ar.shift();
+    *     sd.api = a;sd.args = ar;
+    *     $.ajax({
+    *       url: "/callapi", type: "post", contentType: "application/json;charset=utf-8", dataType: "json",
+    *       data: JSON.stringify(sd),
+    *       success: function(r) {setTimeout(cb.apply(null,r), 0);},
+    *       error: function(e) {throw e;}
+    *     });
+    *   }
+    *   o.getHello = function(){
+    *     sendrequest("mix.getHello", Array.prototype.slice.call(arguments));
+    *   }
+    *   o.getHello2 = function(){
+    *     sendrequest("mix.getHello2", Array.prototype.slice.call(arguments));
+    *   }
+    *   o.getHello3 = function(){
+    *     sendrequest("mix.getHello3", Array.prototype.slice.call(arguments));
+    *   }
+    *   o.openDev = function(callback){
+    *     console.log("openDev is not supported now.");
+    *     setTimeout(callback(false), 0);
+    *   }
+    *   o.isLocal = function(callback){
+    *     setTimeout(callback(false), 0);
+    *   }
+    *   return o;
+    * })
+    */
+  response.writeHead(200, {'Content-Type': content_type = 'application/javascript'});
+  var remotejs='define(function(){var o={};function sendrequest(a, ar){var sd = {};var cb=ar.shift();sd.api = a;sd.args = ar;$.ajax({      url: "/callapi", type: "post", contentType: "application/json;charset=utf-8", dataType: "json", data: JSON.stringify(sd), success: function(r) {setTimeout(cb.apply(null,r), 0);}, error: function(e) {throw e;} });};';
+  response.write(remotejs, "binary");
+  var func;
+  for(func in onehandle) {
+    response.write("o.");
+    response.write(func);
+    if ( "function" === typeof handle_remote[func]) {
+      response.write("=");
+      response.write(handle_remote[func]+";");
+    } else {
+      response.write('=function(){sendrequest("');
+      response.write(modulename);
+      response.write('.');
       response.write(func);
-      if ( "function" === typeof handle_remote[func]) {
-        response.write("=");
-        response.write(handle_remote[func]+";");
-      } else {
-        response.write('=function(){sendrequest("');
-        response.write(modulename);
-        response.write('.');
-        response.write(func);
-        response.write('", Array.prototype.slice.call(arguments));};');
-      }//end of if func exist in ***_remote.js
-    }//end for one handle
-    response.write('return o;});', "binary");
-    response.end();
-    return;
-  });//end of path exist
+      response.write('", Array.prototype.slice.call(arguments));};');
+    }//end of if func exist in ***_remote.js
+  }//end for one handle
+  response.write('return o;});', "binary");
+  response.end();
   return;
 }
 
