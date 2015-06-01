@@ -5,9 +5,9 @@ var http = require("http"),
     sys = require('sys'),
     path = require('path'),
     fs = require('fs'),
-    config = require("../../../config"),
     util = require('util'),
     cp = require('child_process'),
+    config = require('systemconfig'),
     router = require('./router');
 
 function HTTPServer(router) {

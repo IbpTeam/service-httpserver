@@ -3,10 +3,11 @@ var http = require("http"),
     sys = require('sys'),
     path = require('path'),
     fs = require('fs'),
-    config = require('../../../config'),
-    requireProxy = require('../../../sdk/lib/requireProxy').requireProxySync,
-    Cache = require('../../../sdk/utils/cache').Cache,
-    flowctl = require('../../../sdk/utils/flowctl'),
+    config = require('systemconfig'),
+    requireProxy = require('../../../app/demo-rio/sdk/lib/requireProxy').requireProxySync,
+    utils = require('utils'),
+    Cache = utils.Cache(),
+    flowctl = utils.Flowctl(),
     appManager = requireProxy('appmgr');
 
 var appInfoCache = new Cache(20, {
