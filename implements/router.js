@@ -377,7 +377,7 @@ function route(handle, pathname, response, postData) {
       var message = postData;
       wsclient.send("I have got your message whose length is " + postData.length);
       // handle message
-      handlewsmsg(wsclient, message);
+      handleWSMsg(wsclient, message);
       return;
     } else if(pathname == '/callapi') {
       // this is for remote call api in internet browser.
