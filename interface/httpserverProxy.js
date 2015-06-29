@@ -118,6 +118,40 @@ Proxy.prototype.restart = function(callback) {
 
 /**
  * @description
+ *    send a notifacation by using websocket
+ * @param
+ *    param1: message object -> Object
+ *    e.g. msg(object): {
+ *      'Action': 'notify',
+ *      'Event': a string to describe the event type,
+ *      'Data': a json object,
+ *      'Status': ('ok'|'error'),
+ *      'SessionID': the source session ID and this session will not be notified
+ *    }
+ *    param2: a callback function -> Function
+ *      @description
+ *        a callback function for getting returns of this interface
+ *      @param
+ *        param1: the return object -> Object
+ *          {
+ *            err: err description or undefined,
+ *          }
+ * @return
+ *    error or nothing
+ */
+Proxy.prototype.wsNotify = function(msg, callback) {
+  var l = arguments.length,
+      args = Array.prototype.slice.call(arguments, 0, (typeof callback === 'undefined' ? l : l - 1));
+  this._ipc.invoke({
+    token: this._token++,
+    name: 'wsNotify',
+    in: args,
+    callback: callback
+  });
+};
+
+/**
+ * @description
  *    add listener for the http server 'start' or 'stop' event
  * @param
  *    param1: event to listen -> String
@@ -131,6 +165,7 @@ Proxy.prototype.restart = function(callback) {
  */
 Proxy.prototype.on = function(event, handler) {
   this._ipc.on(event, handler);
+  return this;
 };
 
 /**
@@ -148,6 +183,7 @@ Proxy.prototype.on = function(event, handler) {
  */
 Proxy.prototype.off = function(event, handler) {
   this._ipc.removeListener(event, handler);
+  return this;
 };
 
 var proxy = null;

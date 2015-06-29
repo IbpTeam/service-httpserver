@@ -9,7 +9,8 @@ var http = require("http"),
     Cache = utils.Cache(),
     flowctl = utils.Flowctl(),
     appManager = requireProxy('appmgr'),
-    api = require('api');
+    api = require('api'),
+    noop = function() {};
 
 var appInfoCache = new Cache(20, {
   init: function(key, list) {
@@ -339,16 +340,18 @@ exports.removeWSListeners = removeWSListeners;
  *  'Event': a string to describe the event type,
  *  'Data': a json object,
  *  'Status': ('ok'|'error'),
- *  'SessionID': the ID of session who want to notify others and will not be notified
+ *  'SessionID': the source session ID and this session will not be notified
  * }
  */
-function wsNotify(msg) {
+function wsNotify(msg, callback) {
+  var cb = callback || noop;
   if(typeof msg.Action === 'undefined' || msg.Action != 'notify')
-    return console.log('Bad notify');
+    return cb('Bad notify');
   try {
     handleWSMsg(null, JSON.stringify(msg));
+    cb(null);
   } catch(e) {
-    console.log(e);
+    cb(e);
   }
 }
 exports.wsNotify = wsNotify;
@@ -374,7 +377,7 @@ function route(handle, pathname, response, postData) {
       var message = postData;
       wsclient.send("I have got your message whose length is " + postData.length);
       // handle message
-      handlewsmsg(wsclient, message);
+      handleWSMsg(wsclient, message);
       return;
     } else if(pathname == '/callapi') {
       // this is for remote call api in internet browser.
