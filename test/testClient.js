@@ -9,5 +9,16 @@ proxy.on('start', function(e) {
 proxy.restart(function(ret) {
   if(ret.err) return console.log(ret.err);
   console.log(ret.ret);
+  proxy.wsNotify({
+    Action: 'notify',
+    Event: 'nothing',
+    Data: {},
+    Status: 'ok'
+  }, function(ret) {
+    if(ret.err) {
+      return console.log(ret.err);
+    }
+    console.log(ret.ret);
+  });
 });
 

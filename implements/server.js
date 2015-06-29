@@ -111,3 +111,5 @@ exports.stop = function(callback) {
   });
 };
 
+exports.wsNotify = router.wsNotify;
+

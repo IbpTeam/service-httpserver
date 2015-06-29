@@ -25,18 +25,23 @@ var initObj = {
       "name": "restart",
       "in": [],
       "show": "l"
+    },
+    {
+      "name": "wsNotify",
+      "in": ["Object"],
+      "show": "l"
     }
   ],
   "serviceObj": {
     start: function(callback) {
       httpServer.start(function(err) {
-        if(err) callback({err: err});
+        if(err) return callback({err: err});
         callback({});
       });
     },
     stop: function(callback) {
       httpServer.stop(function(err) {
-        if(err) callback({err: err});
+        if(err) return callback({err: err});
         callback({});
       });
     },
@@ -59,6 +64,12 @@ var initObj = {
           }
         }
       ], function(err, rets) {
+        if(err) return callback({err: err});
+        callback({});
+      });
+    },
+    wsNotify: function(msg, callback) {
+      httpServer.wsNotify(msg, function(err) {
         if(err) return callback({err: err});
         callback({});
       });
