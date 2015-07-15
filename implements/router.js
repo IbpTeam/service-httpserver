@@ -3,6 +3,7 @@ var http = require("http"),
     sys = require('sys'),
     path = require('path'),
     fs = require('fs'),
+    os = require('os'),
     config = require('systemconfig'),
     requireProxy = require('../../../app/demo-rio/sdk/lib/requireProxy').requireProxySync,
     utils = require('utils'),
@@ -11,6 +12,10 @@ var http = require("http"),
     appManager = requireProxy('appmgr'),
     api = require('api'),
     noop = function() {};
+
+var netIface = os.networkInterfaces(),
+    eth = netIface.eth0 || netIface.eth1,
+    serverAddr = eth[0].address + ':' + config.SERVERPORT;
 
 var appInfoCache = new Cache(20, {
   init: function(key, list) {
@@ -71,7 +76,10 @@ function getRemoteAPIFile(handle, modulename, response) {
     *     var cb=ar.shift();
     *     sd.api = a;sd.args = ar;
     *     $.ajax({
-    *       url: "/callapi", type: "post", contentType: "application/json;charset=utf-8", dataType: "json",
+    *       url: "/api",
+    *       type: "post", 
+    *       contentType: "application/json;charset=utf-8",
+    *       dataType: "json",
     *       data: JSON.stringify(sd),
     *       success: function(r) {setTimeout(cb.apply(null,r), 0);},
     *       error: function(e) {throw e;}
@@ -97,7 +105,7 @@ function getRemoteAPIFile(handle, modulename, response) {
     * })
     */
   response.writeHead(200, {'Content-Type': content_type = 'application/javascript'});
-  var remotejs='define(function(){var o={};function sendrequest(a, ar){var sd = {};var cb=ar.shift();sd.api = a;sd.args = ar;$.ajax({      url: "/callapi", type: "post", contentType: "application/json;charset=utf-8", dataType: "json", data: JSON.stringify(sd), success: function(r) {setTimeout(cb.apply(null,r), 0);}, error: function(e) {throw e;} });};';
+  var remotejs='define(function(){var o={};function sendrequest(a, ar){var sd = {};var cb=ar.shift();sd.api = a;sd.args = ar;$.ajax({url: "/api", type: "post", contentType: "application/json;charset=utf-8", dataType: "json", data: JSON.stringify(sd), success: function(r) {setTimeout(cb.apply(null,r), 0);}, error: function(e) {throw e;} });};';
   response.write(remotejs, "binary");
   var func;
   for(func in onehandle) {
@@ -169,14 +177,13 @@ function getRealFile(pathname, response) {
 
 function handleAPICall(handle, pathname, response, postData) {
   if(postData === null || postData.length === 0) {
-    errorHandler(404, response, "Invalid callapi");
+    errorHandler(404, response, "Invalid api call");
   }
   var postDataJSON = JSON.parse(postData),
       args = postDataJSON.args,
       apiPathArr = postDataJSON.api.split("."),
       sendresponse = function() {
         response.writeHead(200, {"Content-Type": mimeTypes["js"]});
-        console.log('callapi return:', arguments);
         response.write(JSON.stringify(Array.prototype.slice.call(arguments)));
         response.end();
       };
@@ -197,6 +204,12 @@ function handleAPPCall(handle, pathname, response, postData) {
       sFilename = path.join.apply(this, url.slice(2)),
       runapp = null;
 
+  if(sFilename == '.') {
+    response.writeHead(302, {
+      'Location': 'http://' + serverAddr + pathname + '/main'
+    });
+    return response.end();
+  };
   flowctl.series([
     {
       fn: function(pera, cb) {
@@ -220,9 +233,11 @@ function handleAPPCall(handle, pathname, response, postData) {
       errorHandler(404, response, "This request URL " + pathname + " was not found on this server.");
       return ;
     }
-
-    if(sFilename === "index.html") {
-      getRealFile(path.join(runapp.path, sFilename), response);
+ 
+    // if(sFilename === "index.html") {
+    if(sFilename === 'main') {
+      // getRealFile(path.join(runapp.path, sFilename), response);
+      getRealFile(path.join(runapp.path, 'index.html'), response);
     } else if(sFilename === "lib/api.js") {
       getRealFile(path.join(runapp.path, "lib/api_remote.js"), response);
     } else if(sFilename.lastIndexOf("lib/api/", 0) === 0 
@@ -369,9 +384,9 @@ function route(handle, pathname, response, postData) {
   console.log("The route for path: %s, data: %s", pathname, postData);
   try {
     if(pathname == '/') {
-      response.write("The index pages is blank.");
-      response.end();
-      return;
+      // TODO: show desktop
+      response.writeHead(302, {Location: 'http://' + serverAddr + '/app/desktop-app/main'});
+      return response.end();
     } else if(pathname == '/ws') {
       var wsclient = response;
       var message = postData;
@@ -379,10 +394,11 @@ function route(handle, pathname, response, postData) {
       // handle message
       handleWSMsg(wsclient, message);
       return;
-    } else if(pathname == '/callapi') {
+    } else if(pathname == '/api') {
       // this is for remote call api in internet browser.
       return handleAPICall(handle, pathname, response, postData);
-    } else if(pathname.lastIndexOf("/callapp/", 0) === 0) {
+    // } else if(pathname.lastIndexOf("/callapp/", 0) === 0) {
+    } else if(pathname.lastIndexOf("/app/", 0) === 0) {
       // This is for remote open app in internet browser.
       return handleAPPCall(handle, pathname, response, postData);
     } else {
@@ -398,7 +414,7 @@ function route(handle, pathname, response, postData) {
         var modulename = pathname.substring(9, pathname.length - 3);
         getRemoteAPIFile(handle, modulename, response);
         return;
-      }else {
+      } else {
         getRealFile(pathname, response);
         return;
       }//end of /lib/api/***.js
