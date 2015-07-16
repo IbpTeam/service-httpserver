@@ -13,10 +13,6 @@ var http = require("http"),
     api = require('api'),
     noop = function() {};
 
-api['devDetect']().startMdnsService(function(state) {
-  if(!state) console.log('Fail to start mdns service');
-});
-
 var netIface = os.networkInterfaces(),
     eth = netIface.eth0 || netIface.eth1,
     serverAddr = eth[0].address + ':' + config.SERVERPORT;

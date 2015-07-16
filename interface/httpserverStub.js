@@ -2,7 +2,8 @@
 // Please make sure that you have checked all TODOs in this file.
 // TODO: please replace types with peramters' name you wanted of any functions
 // TODO: please replace $ipcType with one of dbus, binder, websocket and socket
-var flowctl = require('utils').Flowctl();
+var flowctl = require('utils').Flowctl(),
+    api = require('api');
 
 var initObj = {
   "address": "nodejs.webde.httpserver",
@@ -92,6 +93,10 @@ exports.getStub = function(httpServer_) {
   if(stub == null) {
     stub = new Stub();
     httpServer = httpServer_;
+
+    api['devDetect']().startMdnsService(function(state) {
+      if(!state) console.log('Fail to start mdns service');
+    });
   }
   return stub;
 }
