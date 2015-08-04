@@ -75,10 +75,10 @@ HTTPServer.prototype._start = function() {
     client.on('message', function(message) {
         console.log('received: %s', message);
         self._router.route(self._proxy, config.WEBSOCKETPATH, client, message);
-    }).on('disconnect',function() {
-      console.log('websocket has disconnected:%s', client);
+    }).on('close',function() {
+      console.log('websocket has disconnected: %s', client);
       // remove all listeners of this client
-      removeWSListeners(client);
+      self._router.removeWSListeners(client);
     });
   });
   config.riolog("Server has started.");
