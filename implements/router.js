@@ -60,6 +60,7 @@ function getRemoteAPIFile(handle, modulename, response) {
       remote = modulename + "_remote",
       onehandle = api[modulename]();
 
+  onehandle.wsNotify = wsNotify;
   handle[modulename] = onehandle;
   var handle_remote = [];
   if(typeof api[remote] != "undefined") {
