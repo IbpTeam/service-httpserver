@@ -14,7 +14,7 @@ var http = require("http"),
     noop = function() {};
 
 var netIface = os.networkInterfaces(),
-    eth = netIface.eth0 || netIface.eth1,
+    eth = netIface.eth0 || netIface.eth1 ||netIface.wlan0,
     serverAddr = eth[0].address + ':' + config.SERVERPORT;
 
 var appInfoCache = new Cache(20, {
